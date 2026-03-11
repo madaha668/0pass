@@ -362,10 +362,10 @@ func TestSave_WriteError(t *testing.T) {
 	}
 
 	// Make the directory read-only so WriteFile fails
-	if err := os.Chmod(dir, 0500); err != nil {
+	if err := os.Chmod(dir, 0500); err != nil { //nolint:gosec
 		t.Fatal(err)
 	}
-	defer os.Chmod(dir, 0700)
+	defer func() { _ = os.Chmod(dir, 0700) }() //nolint:gosec
 
 	err = v.Save(pw)
 	if err == nil {
@@ -384,7 +384,7 @@ func TestLoad_ReadError(t *testing.T) {
 	if err := os.WriteFile(vaultPath, []byte("data"), 0200); err != nil { // write-only
 		t.Fatal(err)
 	}
-	defer os.Chmod(vaultPath, 0600)
+	defer func() { _ = os.Chmod(vaultPath, 0600) }()
 
 	_, err := Load([]byte("pw"))
 	if err == nil {

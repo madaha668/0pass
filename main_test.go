@@ -20,8 +20,8 @@ func TestMain_Execute(t *testing.T) {
 	// main() → cmd.Execute() → rootCmd.Execute() with --help → returns nil (no os.Exit)
 	main()
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
-	io.Copy(io.Discard, r) //nolint
-	r.Close()
+	_, _ = io.Copy(io.Discard, r)
+	_ = r.Close()
 }

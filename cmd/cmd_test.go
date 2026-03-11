@@ -858,10 +858,10 @@ func TestAddCommand_SaveError(t *testing.T) {
 
 	// Make the vault directory read-only so Save fails.
 	dir := filepath.Dir(vault.VaultPath())
-	if err := os.Chmod(dir, 0500); err != nil {
+	if err := os.Chmod(dir, 0500); err != nil { //nolint:gosec
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { os.Chmod(dir, 0700) })
+	t.Cleanup(func() { _ = os.Chmod(dir, 0700) }) //nolint:gosec
 
 	pageInfoFetcher = func(url string) (*fetch.PageInfo, error) {
 		return nil, fmt.Errorf("no fetch")
@@ -882,10 +882,10 @@ func TestEditCommand_SaveError(t *testing.T) {
 	env.addEntry(t, "GitHub", "alice", "pw", "https://github.com", "notes")
 
 	dir := filepath.Dir(vault.VaultPath())
-	if err := os.Chmod(dir, 0500); err != nil {
+	if err := os.Chmod(dir, 0500); err != nil { //nolint:gosec
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { os.Chmod(dir, 0700) })
+	t.Cleanup(func() { _ = os.Chmod(dir, 0700) }) //nolint:gosec
 
 	env.setPasswords(env.pw, []byte(""))
 	env.setStdinLines("", "", "", "")

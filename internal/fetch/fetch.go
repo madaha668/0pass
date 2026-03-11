@@ -31,7 +31,7 @@ func FetchPageInfo(rawURL string) (*PageInfo, error) {
 	if err != nil {
 		return nil, fmt.Errorf("fetching page: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	doc, err := htmlParser(resp.Body)
 	if err != nil {
