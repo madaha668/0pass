@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -14,7 +13,7 @@ import (
 var editCmd = &cobra.Command{
 	Use:   "edit [query]",
 	Short: "Edit an existing vault entry",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		var query string
 		if len(args) > 0 {
 			query = args[0]
@@ -22,8 +21,7 @@ var editCmd = &cobra.Command{
 
 		v, pw, err := mustLoadVault()
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			return err
 		}
 		defer vault.ZeroBytes(pw)
 
@@ -32,90 +30,82 @@ var editCmd = &cobra.Command{
 		var entry *vault.Entry
 		switch len(entries) {
 		case 0:
-			fmt.Println("No entries found.")
-			return
+			fmt.Fprintln(stdout, "No entries found.")
+			return nil
 		case 1:
 			entry = entries[0]
 		default:
 			entry, err = selectEntry(entries)
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
+				return err
 			}
 		}
 
 		// Name
 		nameInput, err := readLine(fmt.Sprintf("Name [%s]: ", entry.Name))
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			return err
 		}
-		nameInput = strings.TrimSpace(nameInput)
-		if nameInput != "" {
-			entry.Name = nameInput
+		if strings.TrimSpace(nameInput) != "" {
+			entry.Name = strings.TrimSpace(nameInput)
 		}
 
 		// Username
 		usernameInput, err := readLine(fmt.Sprintf("Username [%s]: ", entry.Username))
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			return err
 		}
-		usernameInput = strings.TrimSpace(usernameInput)
-		if usernameInput != "" {
-			entry.Username = usernameInput
+		if strings.TrimSpace(usernameInput) != "" {
+			entry.Username = strings.TrimSpace(usernameInput)
 		}
 
 		// URL
 		urlInput, err := readLine(fmt.Sprintf("URL [%s]: ", entry.URL))
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			return err
 		}
-		urlInput = strings.TrimSpace(urlInput)
-		if urlInput != "" {
-			entry.URL = urlInput
+		if strings.TrimSpace(urlInput) != "" {
+			entry.URL = strings.TrimSpace(urlInput)
 		}
 
 		// Password
-		pwInput, err := readPassword("Password [leave empty to keep, g to generate]: ")
+		pwInput, err := passwordReader("Password [leave empty to keep, g to generate]: ")
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			return err
 		}
 		pwStr := strings.TrimSpace(string(pwInput))
 		vault.ZeroBytes(pwInput)
-		if pwStr == "g" {
+		switch pwStr {
+		case "g":
 			opts := generator.DefaultOptions()
 			generated, err := generator.Generate(opts)
 			if err != nil {
-				fmt.Fprintln(os.Stderr, "generating password:", err)
-				os.Exit(1)
+				return fmt.Errorf("generating password: %w", err)
 			}
 			entry.Password = generated
-			fmt.Printf("Generated password: %s\n", generated)
-		} else if pwStr != "" {
+			fmt.Fprintf(stdout, "Generated password: %s\n", generated)
+		case "":
+			// keep existing
+		default:
 			entry.Password = pwStr
 		}
 
 		// Notes
 		notesInput, err := readLine(fmt.Sprintf("Notes [%s]: ", entry.Notes))
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			return err
 		}
-		notesInput = strings.TrimSpace(notesInput)
-		if notesInput != "" {
-			entry.Notes = notesInput
+		if strings.TrimSpace(notesInput) != "" {
+			entry.Notes = strings.TrimSpace(notesInput)
 		}
 
 		entry.UpdatedAt = time.Now()
 
 		if err := v.Save(pw); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			return err
 		}
 
-		fmt.Println("Entry updated.")
+		fmt.Fprintln(stdout, "Entry updated.")
+		return nil
 	},
 }

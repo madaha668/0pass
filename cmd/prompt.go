@@ -1,40 +1,42 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
-	"os"
+	"io"
 	"strconv"
 	"strings"
 
 	"github.com/madaha668/0pass/internal/vault"
-	"golang.org/x/term"
 )
 
-// readPassword reads a password from the terminal without echo.
-func readPassword(prompt string) ([]byte, error) {
-	fmt.Print(prompt)
-	pw, err := term.ReadPassword(int(os.Stdin.Fd()))
-	fmt.Println()
-	if err != nil {
-		return nil, err
-	}
-	return pw, nil
-}
-
-// readLine reads a line of text from stdin.
+// readLine reads a line of text from stdin, one byte at a time to avoid
+// buffering issues when stdin is replaced in tests.
 func readLine(prompt string) (string, error) {
-	fmt.Print(prompt)
-	reader := bufio.NewReader(os.Stdin)
-	line, err := reader.ReadString('\n')
-	return strings.TrimRight(line, "\r\n"), err
+	fmt.Fprint(stdout, prompt)
+	var result []byte
+	buf := make([]byte, 1)
+	for {
+		n, err := stdin.Read(buf)
+		if n > 0 {
+			if buf[0] == '\n' {
+				break
+			}
+			result = append(result, buf[0])
+		}
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return "", err
+		}
+	}
+	return strings.TrimRight(string(result), "\r"), nil
 }
 
-// selectEntry shows a numbered list and asks the user to pick one.
-// Returns the chosen entry or an error.
+// selectEntry shows a numbered list and prompts the user to pick one.
 func selectEntry(entries []*vault.Entry) (*vault.Entry, error) {
 	for i, e := range entries {
-		fmt.Printf("  [%d] %s (%s)\n", i+1, e.Name, e.URL)
+		fmt.Fprintf(stdout, "  [%d] %s (%s)\n", i+1, e.Name, e.URL)
 	}
 	line, err := readLine("Select entry: ")
 	if err != nil {
@@ -45,19 +47,4 @@ func selectEntry(entries []*vault.Entry) (*vault.Entry, error) {
 		return nil, fmt.Errorf("invalid selection")
 	}
 	return entries[n-1], nil
-}
-
-// mustLoadVault prompts for master password and loads the vault.
-// Returns the vault and the raw password bytes (caller must ZeroBytes when done).
-func mustLoadVault() (*vault.Vault, []byte, error) {
-	pw, err := readPassword("Master password: ")
-	if err != nil {
-		return nil, nil, err
-	}
-	v, err := vault.Load(pw)
-	if err != nil {
-		vault.ZeroBytes(pw)
-		return nil, nil, err
-	}
-	return v, pw, nil
 }

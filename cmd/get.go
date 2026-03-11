@@ -2,10 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
-	"github.com/atotto/clipboard"
 	"github.com/madaha668/0pass/internal/vault"
 	"github.com/spf13/cobra"
 )
@@ -13,7 +11,7 @@ import (
 var getCmd = &cobra.Command{
 	Use:   "get [query]",
 	Short: "Copy a password to the clipboard",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		var query string
 		if len(args) > 0 {
 			query = args[0]
@@ -21,16 +19,14 @@ var getCmd = &cobra.Command{
 			var err error
 			query, err = readLine("Search: ")
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
+				return err
 			}
 			query = strings.TrimSpace(query)
 		}
 
 		v, pw, err := mustLoadVault()
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			return err
 		}
 		defer vault.ZeroBytes(pw)
 
@@ -39,23 +35,22 @@ var getCmd = &cobra.Command{
 		var entry *vault.Entry
 		switch len(entries) {
 		case 0:
-			fmt.Println("No entries found.")
-			return
+			fmt.Fprintln(stdout, "No entries found.")
+			return nil
 		case 1:
 			entry = entries[0]
 		default:
 			entry, err = selectEntry(entries)
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
+				return err
 			}
 		}
 
-		if err := clipboard.WriteAll(entry.Password); err != nil {
-			fmt.Fprintln(os.Stderr, "writing to clipboard:", err)
-			os.Exit(1)
+		if err := clipboardWriter(entry.Password); err != nil {
+			return fmt.Errorf("writing to clipboard: %w", err)
 		}
 
-		fmt.Printf("Password for %q copied to clipboard.\n", entry.Name)
+		fmt.Fprintf(stdout, "Password for %q copied to clipboard.\n", entry.Name)
+		return nil
 	},
 }

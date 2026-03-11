@@ -7,6 +7,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// osExit is injectable for tests.
+var osExit = os.Exit
+
 var rootCmd = &cobra.Command{
 	Use:   "0pass",
 	Short: "0pass is a secure command-line password vault",
@@ -17,8 +20,13 @@ var rootCmd = &cobra.Command{
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		osExit(1)
 	}
+}
+
+// SetArgs sets the command arguments (used in tests and main_test.go).
+func SetArgs(args []string) {
+	rootCmd.SetArgs(args)
 }
 
 func init() {

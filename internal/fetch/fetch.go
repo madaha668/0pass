@@ -9,6 +9,9 @@ import (
 	"golang.org/x/net/html"
 )
 
+// htmlParser is injectable for tests.
+var htmlParser = html.Parse
+
 // PageInfo holds metadata extracted from a web page.
 type PageInfo struct {
 	Title       string
@@ -30,7 +33,7 @@ func FetchPageInfo(rawURL string) (*PageInfo, error) {
 	}
 	defer resp.Body.Close()
 
-	doc, err := html.Parse(resp.Body)
+	doc, err := htmlParser(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("parsing HTML: %w", err)
 	}

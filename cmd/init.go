@@ -3,7 +3,6 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"os"
 
 	"github.com/madaha668/0pass/internal/vault"
 	"github.com/spf13/cobra"
@@ -12,31 +11,28 @@ import (
 var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initialize a new password vault",
-	Run: func(cmd *cobra.Command, args []string) {
-		pw1, err := readPassword("Master password: ")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		pw1, err := passwordReader("Master password: ")
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			return err
 		}
 		defer vault.ZeroBytes(pw1)
 
-		pw2, err := readPassword("Confirm master password: ")
+		pw2, err := passwordReader("Confirm master password: ")
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			return err
 		}
 		defer vault.ZeroBytes(pw2)
 
 		if !bytes.Equal(pw1, pw2) {
-			fmt.Fprintln(os.Stderr, "passwords do not match")
-			os.Exit(1)
+			return fmt.Errorf("passwords do not match")
 		}
 
 		if err := vault.Init(pw1); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			return err
 		}
 
-		fmt.Printf("Vault initialized at %s\n", vault.VaultPath())
+		fmt.Fprintf(stdout, "Vault initialized at %s\n", vault.VaultPath())
+		return nil
 	},
 }

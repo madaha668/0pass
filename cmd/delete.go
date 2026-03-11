@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/madaha668/0pass/internal/vault"
@@ -12,7 +11,7 @@ import (
 var deleteCmd = &cobra.Command{
 	Use:   "delete [query]",
 	Short: "Delete a vault entry",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		var query string
 		if len(args) > 0 {
 			query = args[0]
@@ -20,8 +19,7 @@ var deleteCmd = &cobra.Command{
 
 		v, pw, err := mustLoadVault()
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			return err
 		}
 		defer vault.ZeroBytes(pw)
 
@@ -30,34 +28,31 @@ var deleteCmd = &cobra.Command{
 		var entry *vault.Entry
 		switch len(entries) {
 		case 0:
-			fmt.Println("No entries found.")
-			return
+			fmt.Fprintln(stdout, "No entries found.")
+			return nil
 		case 1:
 			entry = entries[0]
 		default:
 			entry, err = selectEntry(entries)
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
+				return err
 			}
 		}
 
-		fmt.Printf("Name:     %s\n", entry.Name)
-		fmt.Printf("Username: %s\n", entry.Username)
-		fmt.Printf("URL:      %s\n", entry.URL)
+		fmt.Fprintf(stdout, "Name:     %s\n", entry.Name)
+		fmt.Fprintf(stdout, "Username: %s\n", entry.Username)
+		fmt.Fprintf(stdout, "URL:      %s\n", entry.URL)
 
 		answer, err := readLine(fmt.Sprintf("Delete '%s'? [y/N]: ", entry.Name))
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			return err
 		}
 		answer = strings.TrimSpace(strings.ToLower(answer))
 		if answer != "y" && answer != "yes" {
-			fmt.Println("Aborted.")
-			return
+			fmt.Fprintln(stdout, "Aborted.")
+			return nil
 		}
 
-		// Remove entry from slice
 		newEntries := make([]*vault.Entry, 0, len(v.Entries)-1)
 		for _, e := range v.Entries {
 			if e.ID != entry.ID {
@@ -67,10 +62,10 @@ var deleteCmd = &cobra.Command{
 		v.Entries = newEntries
 
 		if err := v.Save(pw); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			return err
 		}
 
-		fmt.Println("Deleted.")
+		fmt.Fprintln(stdout, "Deleted.")
+		return nil
 	},
 }

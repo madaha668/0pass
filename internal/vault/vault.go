@@ -15,14 +15,24 @@ var magic = []byte("0PAS")
 
 const version byte = 0x01
 
-// VaultPath returns the path to the vault file.
-func VaultPath() string {
-	home, err := os.UserHomeDir()
+// userHomeDir is injectable for tests.
+var userHomeDir = os.UserHomeDir
+
+// osRename is injectable for tests.
+var osRename = os.Rename
+
+// VaultPathFunc returns the path to the vault file.
+// It can be overridden in tests.
+var VaultPathFunc = func() string {
+	home, err := userHomeDir()
 	if err != nil {
 		return ".0pass/vault.dat"
 	}
 	return filepath.Join(home, ".0pass", "vault.dat")
 }
+
+// VaultPath returns the current vault file path.
+func VaultPath() string { return VaultPathFunc() }
 
 // Vault holds all password entries.
 type Vault struct {
@@ -59,10 +69,7 @@ func (v *Vault) Save(password []byte) error {
 // save writes the vault to path+".tmp" then renames for atomicity.
 // A new salt is generated on every save so the encryption key is refreshed.
 func save(v *Vault, password []byte, path string) error {
-	plaintext, err := json.Marshal(v)
-	if err != nil {
-		return fmt.Errorf("marshalling vault: %w", err)
-	}
+	plaintext, _ := json.Marshal(v)
 
 	salt, err := newSalt()
 	if err != nil {
@@ -89,7 +96,7 @@ func save(v *Vault, password []byte, path string) error {
 		return fmt.Errorf("writing vault: %w", err)
 	}
 
-	if err := os.Rename(tmpPath, path); err != nil {
+	if err := osRename(tmpPath, path); err != nil {
 		_ = os.Remove(tmpPath)
 		return fmt.Errorf("saving vault: %w", err)
 	}

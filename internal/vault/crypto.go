@@ -10,6 +10,8 @@ import (
 	"golang.org/x/crypto/argon2"
 )
 
+var randReader io.Reader = rand.Reader
+
 const (
 	argonTime    = 3
 	argonMemory  = 64 * 1024
@@ -25,7 +27,7 @@ func deriveKey(password, salt []byte) []byte {
 
 func newSalt() ([]byte, error) {
 	salt := make([]byte, saltLen)
-	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
+	if _, err := io.ReadFull(randReader, salt); err != nil {
 		return nil, fmt.Errorf("generating salt: %w", err)
 	}
 	return salt, nil
@@ -37,13 +39,10 @@ func encrypt(key, plaintext []byte) (nonce, ciphertext []byte, err error) {
 		return nil, nil, fmt.Errorf("creating cipher: %w", err)
 	}
 
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, nil, fmt.Errorf("creating GCM: %w", err)
-	}
+	gcm, _ := cipher.NewGCM(block)
 
 	nonce = make([]byte, nonceLen)
-	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+	if _, err = io.ReadFull(randReader, nonce); err != nil {
 		return nil, nil, fmt.Errorf("generating nonce: %w", err)
 	}
 
@@ -57,10 +56,7 @@ func decrypt(key, nonce, ciphertext []byte) ([]byte, error) {
 		return nil, fmt.Errorf("creating cipher: %w", err)
 	}
 
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, fmt.Errorf("creating GCM: %w", err)
-	}
+	gcm, _ := cipher.NewGCM(block)
 
 	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
 	if err != nil {

@@ -3,11 +3,9 @@ package cmd
 import (
 	"crypto/rand"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
-	"github.com/madaha668/0pass/internal/fetch"
 	"github.com/madaha668/0pass/internal/generator"
 	"github.com/madaha668/0pass/internal/vault"
 	"github.com/spf13/cobra"
@@ -16,61 +14,56 @@ import (
 var addCmd = &cobra.Command{
 	Use:   "add",
 	Short: "Add a new password entry",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		v, pw, err := mustLoadVault()
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			return err
 		}
 		defer vault.ZeroBytes(pw)
 
-		// Prompt Name (required)
+		// Name (required)
 		var name string
 		for {
 			name, err = readLine("Name: ")
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
+				return err
 			}
 			name = strings.TrimSpace(name)
 			if name != "" {
 				break
 			}
-			fmt.Println("Name is required.")
+			fmt.Fprintln(stdout, "Name is required.")
 		}
 
-		// Prompt Username
+		// Username
 		username, err := readLine("Username: ")
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			return err
 		}
 		username = strings.TrimSpace(username)
 
-		// Prompt URL (required)
-		var url string
+		// URL (required)
+		var rawURL string
 		for {
-			url, err = readLine("URL: ")
+			rawURL, err = readLine("URL: ")
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
+				return err
 			}
-			url = strings.TrimSpace(url)
-			if url != "" {
+			rawURL = strings.TrimSpace(rawURL)
+			if rawURL != "" {
 				break
 			}
-			fmt.Println("URL is required.")
+			fmt.Fprintln(stdout, "URL is required.")
 		}
 
-		// Attempt to fetch page info
+		// Attempt to fetch page info for notes
 		var notes string
-		pageInfo, fetchErr := fetch.FetchPageInfo(url)
+		pageInfo, fetchErr := pageInfoFetcher(rawURL)
 		if fetchErr == nil && pageInfo != nil && (pageInfo.Title != "" || pageInfo.Description != "") {
-			fmt.Printf("Fetched: %s — %s\n", pageInfo.Title, pageInfo.Description)
+			fmt.Fprintf(stdout, "Fetched: %s — %s\n", pageInfo.Title, pageInfo.Description)
 			answer, err := readLine("Use as notes? [Y/n]: ")
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
+				return err
 			}
 			answer = strings.TrimSpace(strings.ToLower(answer))
 			if answer == "" || answer == "y" || answer == "yes" {
@@ -85,25 +78,22 @@ var addCmd = &cobra.Command{
 			} else {
 				notes, err = readLine("Notes: ")
 				if err != nil {
-					fmt.Fprintln(os.Stderr, err)
-					os.Exit(1)
+					return err
 				}
 				notes = strings.TrimSpace(notes)
 			}
 		} else {
 			notes, err = readLine("Notes: ")
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
+				return err
 			}
 			notes = strings.TrimSpace(notes)
 		}
 
-		// Prompt Password
-		pwInput, err := readPassword("Password (empty to generate): ")
+		// Password (empty = generate)
+		pwInput, err := passwordReader("Password (empty to generate): ")
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			return err
 		}
 
 		var entryPassword string
@@ -111,11 +101,10 @@ var addCmd = &cobra.Command{
 			opts := generator.DefaultOptions()
 			generated, err := generator.Generate(opts)
 			if err != nil {
-				fmt.Fprintln(os.Stderr, "generating password:", err)
-				os.Exit(1)
+				return fmt.Errorf("generating password: %w", err)
 			}
 			entryPassword = generated
-			fmt.Printf("Generated password: %s\n", entryPassword)
+			fmt.Fprintf(stdout, "Generated password: %s\n", entryPassword)
 		} else {
 			entryPassword = string(pwInput)
 			vault.ZeroBytes(pwInput)
@@ -124,8 +113,7 @@ var addCmd = &cobra.Command{
 		// Generate UUID from 16 random bytes
 		var idBytes [16]byte
 		if _, err := rand.Read(idBytes[:]); err != nil {
-			fmt.Fprintln(os.Stderr, "generating ID:", err)
-			os.Exit(1)
+			return fmt.Errorf("generating ID: %w", err)
 		}
 		id := fmt.Sprintf("%x", idBytes)
 
@@ -135,7 +123,7 @@ var addCmd = &cobra.Command{
 			Name:      name,
 			Username:  username,
 			Password:  entryPassword,
-			URL:       url,
+			URL:       rawURL,
 			Notes:     notes,
 			CreatedAt: now,
 			UpdatedAt: now,
@@ -144,10 +132,10 @@ var addCmd = &cobra.Command{
 		v.Entries = append(v.Entries, entry)
 
 		if err := v.Save(pw); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			return err
 		}
 
-		fmt.Println("Entry added.")
+		fmt.Fprintln(stdout, "Entry added.")
+		return nil
 	},
 }
