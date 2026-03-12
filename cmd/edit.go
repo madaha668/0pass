@@ -30,7 +30,7 @@ var editCmd = &cobra.Command{
 		var entry *vault.Entry
 		switch len(entries) {
 		case 0:
-			fmt.Fprintln(stdout, "No entries found.")
+			_, _ = fmt.Fprintln(stdout, "No entries found.")
 			return nil
 		case 1:
 			entry = entries[0]
@@ -83,7 +83,7 @@ var editCmd = &cobra.Command{
 				return fmt.Errorf("generating password: %w", err)
 			}
 			entry.Password = generated
-			fmt.Fprintf(stdout, "Generated password: %s\n", generated)
+			_, _ = fmt.Fprintf(stdout, "Generated password: %s\n", generated)
 		case "":
 			// keep existing
 		default:
@@ -105,7 +105,7 @@ var editCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Fprintln(stdout, "Entry updated.")
+		_, _ = fmt.Fprintln(stdout, "Entry updated.")
 		return nil
 	},
 }

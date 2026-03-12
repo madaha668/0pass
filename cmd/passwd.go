@@ -43,7 +43,7 @@ var passwdCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Fprintln(stdout, "Master password updated.")
+		_, _ = fmt.Fprintln(stdout, "Master password updated.")
 		return nil
 	},
 }

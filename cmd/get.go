@@ -35,7 +35,7 @@ var getCmd = &cobra.Command{
 		var entry *vault.Entry
 		switch len(entries) {
 		case 0:
-			fmt.Fprintln(stdout, "No entries found.")
+			_, _ = fmt.Fprintln(stdout, "No entries found.")
 			return nil
 		case 1:
 			entry = entries[0]
@@ -49,12 +49,12 @@ var getCmd = &cobra.Command{
 		if err := clipboardWriter(entry.Password); err != nil {
 			// Clipboard unavailable (e.g. headless Linux without a display server).
 			// Fall back to printing the password so the app remains usable.
-			fmt.Fprintf(stderr, "Warning: clipboard unavailable (%v)\n", err)
-			fmt.Fprintf(stdout, "Password: %s\n", entry.Password)
+			_, _ = fmt.Fprintf(stderr, "Warning: clipboard unavailable (%v)\n", err)
+			_, _ = fmt.Fprintf(stdout, "Password: %s\n", entry.Password)
 			return nil
 		}
 
-		fmt.Fprintf(stdout, "Password for %q copied to clipboard.\n", entry.Name)
+		_, _ = fmt.Fprintf(stdout, "Password for %q copied to clipboard.\n", entry.Name)
 		return nil
 	},
 }

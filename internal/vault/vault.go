@@ -106,7 +106,7 @@ func save(v *Vault, password []byte, path string) error {
 
 // load reads and decrypts the vault from path.
 func load(password []byte, path string) (*Vault, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // path is controlled by VaultPathFunc
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return nil, fmt.Errorf("vault not found; run '0pass init' first")

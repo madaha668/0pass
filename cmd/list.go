@@ -18,14 +18,14 @@ var listCmd = &cobra.Command{
 		defer vault.ZeroBytes(pw)
 
 		if len(v.Entries) == 0 {
-			fmt.Fprintln(stdout, "Vault is empty.")
+			_, _ = fmt.Fprintln(stdout, "Vault is empty.")
 			return nil
 		}
 
-		fmt.Fprintf(stdout, "%-20s %-20s %s\n", "NAME", "USERNAME", "URL")
-		fmt.Fprintln(stdout, "────────────────────────────────────────────────────────")
+		_, _ = fmt.Fprintf(stdout, "%-20s %-20s %s\n", "NAME", "USERNAME", "URL")
+		_, _ = fmt.Fprintln(stdout, "────────────────────────────────────────────────────────")
 		for _, e := range v.Entries {
-			fmt.Fprintf(stdout, "%-20s %-20s %s\n", e.Name, e.Username, e.URL)
+			_, _ = fmt.Fprintf(stdout, "%-20s %-20s %s\n", e.Name, e.Username, e.URL)
 		}
 		return nil
 	},

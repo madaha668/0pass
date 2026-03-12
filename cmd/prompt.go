@@ -12,7 +12,7 @@ import (
 // readLine reads a line of text from stdin, one byte at a time to avoid
 // buffering issues when stdin is replaced in tests.
 func readLine(prompt string) (string, error) {
-	fmt.Fprint(stdout, prompt)
+	_, _ = fmt.Fprint(stdout, prompt)
 	var result []byte
 	buf := make([]byte, 1)
 	for {
@@ -36,7 +36,7 @@ func readLine(prompt string) (string, error) {
 // selectEntry shows a numbered list and prompts the user to pick one.
 func selectEntry(entries []*vault.Entry) (*vault.Entry, error) {
 	for i, e := range entries {
-		fmt.Fprintf(stdout, "  [%d] %s (%s)\n", i+1, e.Name, e.URL)
+		_, _ = fmt.Fprintf(stdout, "  [%d] %s (%s)\n", i+1, e.Name, e.URL)
 	}
 	line, err := readLine("Select entry: ")
 	if err != nil {

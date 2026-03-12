@@ -32,7 +32,7 @@ var initCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Fprintf(stdout, "Vault initialized at %s\n", vault.VaultPath())
+		_, _ = fmt.Fprintf(stdout, "Vault initialized at %s\n", vault.VaultPath())
 		return nil
 	},
 }

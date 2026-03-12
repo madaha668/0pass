@@ -32,7 +32,7 @@ var addCmd = &cobra.Command{
 			if name != "" {
 				break
 			}
-			fmt.Fprintln(stdout, "Name is required.")
+			_, _ = fmt.Fprintln(stdout, "Name is required.")
 		}
 
 		// Username
@@ -53,14 +53,14 @@ var addCmd = &cobra.Command{
 			if rawURL != "" {
 				break
 			}
-			fmt.Fprintln(stdout, "URL is required.")
+			_, _ = fmt.Fprintln(stdout, "URL is required.")
 		}
 
 		// Attempt to fetch page info for notes
 		var notes string
 		pageInfo, fetchErr := pageInfoFetcher(rawURL)
 		if fetchErr == nil && pageInfo != nil && (pageInfo.Title != "" || pageInfo.Description != "") {
-			fmt.Fprintf(stdout, "Fetched: %s — %s\n", pageInfo.Title, pageInfo.Description)
+			_, _ = fmt.Fprintf(stdout, "Fetched: %s — %s\n", pageInfo.Title, pageInfo.Description)
 			answer, err := readLine("Use as notes? [Y/n]: ")
 			if err != nil {
 				return err
@@ -104,7 +104,7 @@ var addCmd = &cobra.Command{
 				return fmt.Errorf("generating password: %w", err)
 			}
 			entryPassword = generated
-			fmt.Fprintf(stdout, "Generated password: %s\n", entryPassword)
+			_, _ = fmt.Fprintf(stdout, "Generated password: %s\n", entryPassword)
 		} else {
 			entryPassword = string(pwInput)
 			vault.ZeroBytes(pwInput)
@@ -135,7 +135,7 @@ var addCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Fprintln(stdout, "Entry added.")
+		_, _ = fmt.Fprintln(stdout, "Entry added.")
 		return nil
 	},
 }

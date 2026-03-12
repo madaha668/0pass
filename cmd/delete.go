@@ -28,7 +28,7 @@ var deleteCmd = &cobra.Command{
 		var entry *vault.Entry
 		switch len(entries) {
 		case 0:
-			fmt.Fprintln(stdout, "No entries found.")
+			_, _ = fmt.Fprintln(stdout, "No entries found.")
 			return nil
 		case 1:
 			entry = entries[0]
@@ -39,9 +39,9 @@ var deleteCmd = &cobra.Command{
 			}
 		}
 
-		fmt.Fprintf(stdout, "Name:     %s\n", entry.Name)
-		fmt.Fprintf(stdout, "Username: %s\n", entry.Username)
-		fmt.Fprintf(stdout, "URL:      %s\n", entry.URL)
+		_, _ = fmt.Fprintf(stdout, "Name:     %s\n", entry.Name)
+		_, _ = fmt.Fprintf(stdout, "Username: %s\n", entry.Username)
+		_, _ = fmt.Fprintf(stdout, "URL:      %s\n", entry.URL)
 
 		answer, err := readLine(fmt.Sprintf("Delete '%s'? [y/N]: ", entry.Name))
 		if err != nil {
@@ -49,7 +49,7 @@ var deleteCmd = &cobra.Command{
 		}
 		answer = strings.TrimSpace(strings.ToLower(answer))
 		if answer != "y" && answer != "yes" {
-			fmt.Fprintln(stdout, "Aborted.")
+			_, _ = fmt.Fprintln(stdout, "Aborted.")
 			return nil
 		}
 
@@ -65,7 +65,7 @@ var deleteCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Fprintln(stdout, "Deleted.")
+		_, _ = fmt.Fprintln(stdout, "Deleted.")
 		return nil
 	},
 }

@@ -50,7 +50,7 @@ func TestInit_CreatesVaultFile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	data, err := os.ReadFile(vaultPath)
+	data, err := os.ReadFile(vaultPath) //nolint:gosec
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -229,13 +229,13 @@ func TestSave_GeneratesNewSaltEachTime(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	data1, _ := os.ReadFile(vaultPath)
+	data1, _ := os.ReadFile(vaultPath) //nolint:gosec
 	salt1 := data1[5 : 5+saltLen]
 
 	v, _ := Load(pw)
 	_ = v.Save(pw)
 
-	data2, _ := os.ReadFile(vaultPath)
+	data2, _ := os.ReadFile(vaultPath) //nolint:gosec
 	salt2 := data2[5 : 5+saltLen]
 
 	for i := range salt1 {
