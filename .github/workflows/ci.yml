@@ -27,6 +27,9 @@ jobs:
       - name: Print coverage summary
         run: go tool cover -func=cover.out
 
+      - name: Build binary
+        run: go build -o 0pass .
+
   lint:
     name: Lint
     runs-on: ubuntu-latest

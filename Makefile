@@ -1,7 +1,7 @@
 .PHONY: build test lint cover clean
 
 build:
-	go build -o 0pass ./...
+	go build -o 0pass .
 
 test:
 	go test ./... -count=1 -timeout 60s
