@@ -10,7 +10,7 @@ import (
 
 var getCmd = &cobra.Command{
 	Use:   "get [query]",
-	Short: "Copy a password to the clipboard",
+	Short: "Show a password entry",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var query string
 		if len(args) > 0 {
@@ -46,15 +46,13 @@ var getCmd = &cobra.Command{
 			}
 		}
 
-		if err := clipboardWriter(entry.Password); err != nil {
-			// Clipboard unavailable (e.g. headless Linux without a display server).
-			// Fall back to printing the password so the app remains usable.
-			_, _ = fmt.Fprintf(stderr, "Warning: clipboard unavailable (%v)\n", err)
-			_, _ = fmt.Fprintf(stdout, "Password: %s\n", entry.Password)
-			return nil
+		_, _ = fmt.Fprintf(stdout, "Name:     %s\n", entry.Name)
+		_, _ = fmt.Fprintf(stdout, "Username: %s\n", entry.Username)
+		_, _ = fmt.Fprintf(stdout, "URL:      %s\n", entry.URL)
+		_, _ = fmt.Fprintf(stdout, "Password: %s\n", entry.Password)
+		if entry.Notes != "" {
+			_, _ = fmt.Fprintf(stdout, "Notes:    %s\n", entry.Notes)
 		}
-
-		_, _ = fmt.Fprintf(stdout, "Password for %q copied to clipboard.\n", entry.Name)
 		return nil
 	},
 }

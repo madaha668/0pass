@@ -32,7 +32,6 @@ func newTestEnv(t *testing.T) *testEnv {
 	origStdout := stdout
 	origStderr := stderr
 	origPasswordReader := passwordReader
-	origClipboardWriter := clipboardWriter
 	origPageInfoFetcher := pageInfoFetcher
 
 	env := &testEnv{
@@ -55,7 +54,6 @@ func newTestEnv(t *testing.T) *testEnv {
 		stdout = origStdout
 		stderr = origStderr
 		passwordReader = origPasswordReader
-		clipboardWriter = origClipboardWriter
 		pageInfoFetcher = origPageInfoFetcher
 		rootCmd.SilenceErrors = false
 		rootCmd.SilenceUsage = false
@@ -294,26 +292,21 @@ func TestAddCommand_EmptyNameRetries(t *testing.T) {
 
 // --- get command ---
 
-func TestGetCommand_SingleMatch_CopiesClipboard(t *testing.T) {
+func TestGetCommand_SingleMatch_PrintsPassword(t *testing.T) {
 	env := newTestEnv(t)
 	env.initVault(t)
 	env.addEntry(t, "GitHub", "alice", "secretpw", "https://github.com", "")
-
-	var clipped string
-	clipboardWriter = func(text string) error {
-		clipped = text
-		return nil
-	}
 	env.setPasswords(env.pw)
 
 	if err := env.run("get", "github"); err != nil {
 		t.Fatal(err)
 	}
-	if clipped != "secretpw" {
-		t.Errorf("expected clipboard to contain 'secretpw', got %q", clipped)
+	out := env.outBuf.String()
+	if !strings.Contains(out, "secretpw") {
+		t.Errorf("expected password in output, got: %s", out)
 	}
-	if !strings.Contains(env.outBuf.String(), "copied to clipboard") {
-		t.Errorf("unexpected output: %s", env.outBuf.String())
+	if !strings.Contains(out, "GitHub") {
+		t.Errorf("expected name in output, got: %s", out)
 	}
 }
 
@@ -335,17 +328,14 @@ func TestGetCommand_MultipleMatches_SelectsCorrect(t *testing.T) {
 	env.initVault(t)
 	env.addEntry(t, "GitHub", "alice", "pw1", "https://github.com", "")
 	env.addEntry(t, "GitLab", "alice", "pw2", "https://gitlab.com", "")
-
-	var clipped string
-	clipboardWriter = func(text string) error { clipped = text; return nil }
 	env.setPasswords(env.pw)
 	env.setStdinLines("1") // select first entry
 
 	if err := env.run("get", "git"); err != nil {
 		t.Fatal(err)
 	}
-	if clipped == "" {
-		t.Error("expected clipboard to be set")
+	if env.outBuf.Len() == 0 {
+		t.Error("expected output for selected entry")
 	}
 }
 
@@ -353,17 +343,14 @@ func TestGetCommand_QueryFromPrompt(t *testing.T) {
 	env := newTestEnv(t)
 	env.initVault(t)
 	env.addEntry(t, "Notion", "bob", "notion-pw", "https://notion.so", "")
-
-	var clipped string
-	clipboardWriter = func(text string) error { clipped = text; return nil }
 	env.setPasswords(env.pw)
 	env.setStdinLines("notion") // query from prompt (no arg)
 
 	if err := env.run("get"); err != nil {
 		t.Fatal(err)
 	}
-	if clipped != "notion-pw" {
-		t.Errorf("expected 'notion-pw', got %q", clipped)
+	if !strings.Contains(env.outBuf.String(), "notion-pw") {
+		t.Errorf("expected password in output, got: %s", env.outBuf.String())
 	}
 }
 
@@ -372,8 +359,6 @@ func TestGetCommand_InvalidSelection(t *testing.T) {
 	env.initVault(t)
 	env.addEntry(t, "GitHub", "alice", "pw1", "https://github.com", "")
 	env.addEntry(t, "GitLab", "alice", "pw2", "https://gitlab.com", "")
-
-	clipboardWriter = func(text string) error { return nil }
 	env.setPasswords(env.pw)
 	env.setStdinLines("99") // invalid selection
 
@@ -749,28 +734,6 @@ func TestAddCommand_URLRetry(t *testing.T) {
 	}
 }
 
-// --- clipboard error ---
-
-func TestGetCommand_ClipboardUnavailable_FallsBackToStdout(t *testing.T) {
-	env := newTestEnv(t)
-	env.initVault(t)
-	env.addEntry(t, "GitHub", "alice", "secretpw", "https://github.com", "")
-	env.setPasswords(env.pw)
-	clipboardWriter = func(text string) error {
-		return fmt.Errorf("no display")
-	}
-
-	err := env.run("get", "github")
-	if err != nil {
-		t.Fatalf("expected no error on clipboard fallback, got: %v", err)
-	}
-	if !strings.Contains(env.outBuf.String(), "secretpw") {
-		t.Errorf("expected password in stdout on clipboard fallback, got: %q", env.outBuf.String())
-	}
-	if !strings.Contains(env.errBuf.String(), "clipboard unavailable") {
-		t.Errorf("expected warning in stderr, got: %q", env.errBuf.String())
-	}
-}
 
 // --- mustLoadVault passwordReader error ---
 

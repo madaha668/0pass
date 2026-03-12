@@ -4,7 +4,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/atotto/clipboard"
 	"github.com/madaha668/0pass/internal/fetch"
 	"github.com/madaha668/0pass/internal/vault"
 	"golang.org/x/term"
@@ -24,11 +23,6 @@ var passwordReader = func(prompt string) ([]byte, error) {
 	pw, err := term.ReadPassword(int(os.Stdin.Fd())) //nolint:gosec // G115: uintptr→int is safe for fd
 	_, _ = io.WriteString(stdout, "\n")
 	return pw, err
-}
-
-// clipboardWriter writes text to the system clipboard. Replaced in tests.
-var clipboardWriter = func(text string) error {
-	return clipboard.WriteAll(text)
 }
 
 // pageInfoFetcher fetches page metadata from a URL. Replaced in tests.
