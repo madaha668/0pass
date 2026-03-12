@@ -27,7 +27,7 @@ func FetchPageInfo(rawURL string) (*PageInfo, error) {
 	}
 
 	client := &http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Get(rawURL)
+	resp, err := client.Get(rawURL) //nolint:gosec // G107: URL is intentionally user-supplied
 	if err != nil {
 		return nil, fmt.Errorf("fetching page: %w", err)
 	}

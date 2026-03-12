@@ -21,7 +21,7 @@ var (
 var passwordReader = func(prompt string) ([]byte, error) {
 	// Write prompt to stdout (not using fmt to avoid import cycle risk)
 	_, _ = io.WriteString(stdout, prompt)
-	pw, err := term.ReadPassword(int(os.Stdin.Fd()))
+	pw, err := term.ReadPassword(int(os.Stdin.Fd())) //nolint:gosec // G115: uintptr→int is safe for fd
 	_, _ = io.WriteString(stdout, "\n")
 	return pw, err
 }
