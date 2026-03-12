@@ -22,9 +22,3 @@ linters:
       excludes:
         - G304  # file path from variable — intentional in vault load/save
 
-exclusions:
-  rules:
-    - path: "_test\\.go"
-      linters:
-        - gosec
-        - errcheck
