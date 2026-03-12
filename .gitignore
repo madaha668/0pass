@@ -1,0 +1,10 @@
+# Build output
+0pass
+0pass-*
+
+# Test coverage
+*.out
+*.html
+
+# macOS
+.DS_Store
