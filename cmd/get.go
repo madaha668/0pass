@@ -47,7 +47,11 @@ var getCmd = &cobra.Command{
 		}
 
 		if err := clipboardWriter(entry.Password); err != nil {
-			return fmt.Errorf("writing to clipboard: %w", err)
+			// Clipboard unavailable (e.g. headless Linux without a display server).
+			// Fall back to printing the password so the app remains usable.
+			fmt.Fprintf(stderr, "Warning: clipboard unavailable (%v)\n", err)
+			fmt.Fprintf(stdout, "Password: %s\n", entry.Password)
+			return nil
 		}
 
 		fmt.Fprintf(stdout, "Password for %q copied to clipboard.\n", entry.Name)

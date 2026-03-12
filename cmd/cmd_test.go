@@ -751,18 +751,24 @@ func TestAddCommand_URLRetry(t *testing.T) {
 
 // --- clipboard error ---
 
-func TestGetCommand_ClipboardError(t *testing.T) {
+func TestGetCommand_ClipboardUnavailable_FallsBackToStdout(t *testing.T) {
 	env := newTestEnv(t)
 	env.initVault(t)
-	env.addEntry(t, "GitHub", "alice", "pw", "https://github.com", "")
+	env.addEntry(t, "GitHub", "alice", "secretpw", "https://github.com", "")
 	env.setPasswords(env.pw)
 	clipboardWriter = func(text string) error {
-		return fmt.Errorf("clipboard unavailable")
+		return fmt.Errorf("no display")
 	}
 
 	err := env.run("get", "github")
-	if err == nil {
-		t.Fatal("expected error when clipboard fails")
+	if err != nil {
+		t.Fatalf("expected no error on clipboard fallback, got: %v", err)
+	}
+	if !strings.Contains(env.outBuf.String(), "secretpw") {
+		t.Errorf("expected password in stdout on clipboard fallback, got: %q", env.outBuf.String())
+	}
+	if !strings.Contains(env.errBuf.String(), "clipboard unavailable") {
+		t.Errorf("expected warning in stderr, got: %q", env.errBuf.String())
 	}
 }
 
