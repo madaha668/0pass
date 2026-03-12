@@ -29,6 +29,11 @@ func SetArgs(args []string) {
 	rootCmd.SetArgs(args)
 }
 
+// SetVersion injects the build-time version string into the root command.
+func SetVersion(v string) {
+	rootCmd.Version = v
+}
+
 func init() {
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(addCmd)
